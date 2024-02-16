@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Установка переменных
-DOMAIN="yourdomain.com"
+DOMAIN="exampl"
 CERT_DIR="/etc/ssl/certs"
 PRIVATE_KEY_DIR="/etc/ssl/private"
 CERT_FILE="$DOMAIN.crt"
 PRIVATE_KEY_FILE="$DOMAIN.key"
-DAYS_VALID=3650
+DAYS_VALID=36500
 
 # Создание каталогов, если они не существуют
 mkdir -p $CERT_DIR
@@ -16,11 +16,17 @@ mkdir -p $PRIVATE_KEY_DIR
 openssl req -x509 -nodes -days $DAYS_VALID -newkey rsa:2048 \
     -keyout "$PRIVATE_KEY_DIR/$PRIVATE_KEY_FILE" \
     -out "$CERT_DIR/$CERT_FILE" \
-    -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=$DOMAIN"
+    -subj "/C=RU/ST=Russian/L=Stupino/O=Kaf/OU=Unit/CN=$DOMAIN"
+
+# Создание конфигурационного файла
+echo "<VirtualHost *:443> \n ServerName $DOMAIN.com \n DocumentRoot /var/www/$DOMAIN.com/html \n SSLEngine on \n SSLCertificateFile /etc/ssl/certs/$DOMAIN.crt \n SSLCertificateKeyFile /etc/ssl/private/$DOMAIN.key \n </VirtualHost> \n <VirtualHost *:443> \n ServerName $DOMAIN.com \n Redirect / https://$DOMAIN.com/ \n </VirtualHost>" > /etc/apache2/sites-available/$DOMAIN.com.conf
 
 # Настройка прав доступа к файлам ключа и сертификата
 chmod 600 "$PRIVATE_KEY_DIR/$PRIVATE_KEY_FILE"
 chmod 644 "$CERT_DIR/$CERT_FILE"
+
+#Проверка конфигурационного файла Apache
+apachectl configtest
 
 # Перезапуск Apache для применения изменений
 systemctl restart apache2
